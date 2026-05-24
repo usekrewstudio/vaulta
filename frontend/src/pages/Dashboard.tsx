@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
-import { useAuthStore } from '../../lib/store';
-import { Portfolio, Asset, AssetType } from '../../types';
+import { api } from '../lib/api';
+import { useAuthStore } from '../lib/store';
+import { Portfolio, Asset, AssetType } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import styles from './Dashboard.module.css';

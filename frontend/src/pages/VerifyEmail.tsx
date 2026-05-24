@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
-import { useAuthStore } from '../../lib/store';
+import { api } from '../lib/api';
+import { useAuthStore } from '../lib/store';
 import toast from 'react-hot-toast';
 import styles from './Auth.module.css';
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../lib/store';
+import { useAuthStore } from '../lib/store';
 import styles from './Onboarding.module.css';
 
 export default function Onboarding() {
