@@ -11,9 +11,8 @@ function generateOtp(): string {
 }
 
 function signToken(id: string, email: string): string {
-  return jwt.sign({ id, email }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
-  });
+  const expiresIn = (process.env.JWT_EXPIRES_IN ?? '7d') as any;
+  return jwt.sign({ id, email }, process.env.JWT_SECRET!, { expiresIn });
 }
 
 export async function signup(req: Request, res: Response, next: NextFunction): Promise<void> {
