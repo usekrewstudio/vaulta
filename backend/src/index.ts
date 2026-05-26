@@ -13,12 +13,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-// Security & parsing
+// Security
 app.use(helmet());
+
+// CORS — allow frontend + any *.vercel.app preview deployments
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://vaulta-jade.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight for all routes
+app.options('*', cors());
+
 app.use(express.json());
 
 // Health check
@@ -47,7 +67,7 @@ if (process.env.NODE_ENV !== 'production') {
   }
   bootstrap();
 } else {
-  // In production (Vercel serverless), run migrations once
+  // In production (Vercel serverless), run migrations once on cold start
   connectDB().then(() => runMigrations()).catch(console.error);
 }
 
