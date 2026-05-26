@@ -1,5 +1,4 @@
-import express from 'express';
-import cors from 'cors';
+import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { connectDB, runMigrations } from './config/database';
@@ -13,32 +12,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-// Security
-app.use(helmet());
+// --- Manual CORS middleware (runs before everything, always) ---
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin ?? '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
-// CORS — allow frontend + any *.vercel.app preview deployments
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://vaulta-jade.vercel.app',
-  process.env.FRONTEND_URL,
-].filter(Boolean) as string[];
+  // Respond to preflight immediately
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-    callback(new Error(`CORS blocked: ${origin}`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// Handle preflight for all routes
-app.options('*', cors());
-
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 
 // Health check
@@ -56,7 +46,7 @@ app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 // Error handler
 app.use(errorHandler);
 
-// For local dev: start the server
+// Local dev
 if (process.env.NODE_ENV !== 'production') {
   async function bootstrap(): Promise<void> {
     await connectDB();
@@ -67,9 +57,7 @@ if (process.env.NODE_ENV !== 'production') {
   }
   bootstrap();
 } else {
-  // In production (Vercel serverless), run migrations once on cold start
   connectDB().then(() => runMigrations()).catch(console.error);
 }
 
-// Export for Vercel serverless
 export default app;
