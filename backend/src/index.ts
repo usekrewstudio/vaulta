@@ -10,25 +10,22 @@ import { userRouter, fxRouter } from './routes/index';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT ?? 3001;
 
-// --- Manual CORS middleware (runs before everything, always) ---
+// --- CORS must be first, before everything ---
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const origin = req.headers.origin ?? '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
 
-  // Respond to preflight immediately
   if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
+    res.status(200).end();
     return;
   }
   next();
 });
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({ crossOriginResourcePolicy: false, crossOriginOpenerPolicy: false }));
 app.use(express.json());
 
 // Health check
@@ -46,14 +43,12 @@ app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 // Error handler
 app.use(errorHandler);
 
-// Local dev
 if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT ?? 3001;
   async function bootstrap(): Promise<void> {
     await connectDB();
     await runMigrations();
-    app.listen(PORT, () => {
-      console.log(`🚀 Vaulta API running on http://localhost:${PORT}`);
-    });
+    app.listen(PORT, () => console.log(`🚀 Vaulta API running on http://localhost:${PORT}`));
   }
   bootstrap();
 } else {
