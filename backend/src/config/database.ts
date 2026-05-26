@@ -3,20 +3,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Force SSL for Supabase
+const connectionString = process.env.DATABASE_URL;
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionString,
+  ssl: { rejectUnauthorized: false },
+  max: 1, // Serverless — keep pool small
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
 });
 
 export async function connectDB(): Promise<void> {
-  try {
-    const client = await pool.connect();
-    console.log('✅ PostgreSQL connected');
-    client.release();
-  } catch (err) {
-    console.error('❌ PostgreSQL connection failed:', err);
-    process.exit(1);
-  }
+  const client = await pool.connect();
+  console.log('✅ PostgreSQL connected');
+  client.release();
 }
 
 export async function runMigrations(): Promise<void> {
